@@ -1,22 +1,27 @@
-﻿using TicketsBooking.Core.Interfaces;
+﻿using MassTransit;
+using TicketsBooking.Core.Events;
+using TicketsBooking.Core.Interfaces;
+using TicketsBooking.Application.DTOs;
 
 namespace TicketsBooking.Application.Services
 {
     public class BookingApplicationService
     {
         private readonly ICacheService _cacheService;
+        private readonly IPublishEndpoint _publishEndpoint; // Injeção do MassTransit
 
-        public BookingApplicationService(ICacheService cacheService)
+        public BookingApplicationService(ICacheService cacheService, IPublishEndpoint publishEndpoint)
         {
             _cacheService = cacheService;
+            _publishEndpoint = publishEndpoint;
         }
 
-        public async Task<BookingResultDto> ReserveSeatTemporarilyAsync(Guid tripId, string seatNumber, string passengerId)
+        public async Task<BookingResultDto> ConfirmBookingAndPayAsync(Guid tripId, string seatNumber, string passengerName, string passengerDocument, decimal price)
         {
-            // Definimos o tempo regulamentar de retenção da poltrona (10 minutos)
+            var passengerId = passengerDocument; // Usando o documento como identificador único temporário
             var expirationTime = TimeSpan.FromMinutes(10);
 
-            // Tenta obter o lock atômico no Redis
+            // 1. Tenta pegar a trava no Redis para evitar overbooking
             bool isLockAcquired = await _cacheService.AcquireSeatLockAsync(tripId, seatNumber, passengerId, expirationTime);
 
             if (!isLockAcquired)
@@ -24,24 +29,31 @@ namespace TicketsBooking.Application.Services
                 return new BookingResultDto
                 {
                     Success = false,
-                    Message = "Este assento já está reservado por outro usuário ou já foi vendido."
+                    Message = "Assento indisponível ou já reservado."
                 };
             }
+
+            // 2. Simula a criação do ID da reserva que iria para o banco relacional futuramente
+            var bookingId = Guid.NewGuid();
+
+            // 3. Publica o evento de forma ASSÍNCRONA no RabbitMQ
+            await _publishEndpoint.Publish(new BookingCreatedEvent
+            {
+                BookingId = bookingId,
+                TripId = tripId,
+                SeatNumber = seatNumber,
+                Amount = price,
+                PassengerName = passengerName,
+                PassengerDocument = passengerDocument,
+                CreatedAt = DateTime.UtcNow
+            });
 
             return new BookingResultDto
             {
                 Success = true,
-                Message = $"Assento reservado com sucesso! Você tem {expirationTime.Minutes} minutos para concluir o pagamento.",
+                Message = "Reserva garantida! Seu pagamento foi enviado para processamento na fila.",
                 ExpiresAt = DateTime.UtcNow.Add(expirationTime)
             };
         }
-    }
-
-    // DTO auxiliar para responder à API
-    public class BookingResultDto
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public DateTime? ExpiresAt { get; set; }
     }
 }
