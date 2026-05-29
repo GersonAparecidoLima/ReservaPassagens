@@ -1,16 +1,24 @@
 ﻿using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TicketsBooking.Core.Entities;
 using TicketsBooking.Core.Events;
+using TicketsBooking.Infrastructure.Data;
+using TicketsBooking.Infrastructure.Data.Context;
 
 namespace TicketsBooking.Infrastructure.Messaging
 {
     public class BookingCreatedConsumer : IConsumer<BookingCreatedEvent>
     {
         private readonly ILogger<BookingCreatedConsumer> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public BookingCreatedConsumer(ILogger<BookingCreatedConsumer> logger)
+        public BookingCreatedConsumer(
+            ILogger<BookingCreatedConsumer> logger,
+            ApplicationDbContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         public async Task Consume(ConsumeContext<BookingCreatedEvent> context)
@@ -19,14 +27,43 @@ namespace TicketsBooking.Infrastructure.Messaging
 
             _logger.LogInformation("--- [Mensageria] Mensagem recebida da fila ---");
             _logger.LogInformation("Processando pagamento para a Reserva: {BookingId}", message.BookingId);
-            _logger.LogInformation("Passageiro: {PassengerName} | Valor: R$ {Amount}", message.PassengerName, message.Amount);
 
-            // Simula a comunicação com o Gateway de Pagamento (Stripe, Cielo, etc.)
+            // Simula gateway de pagamento
             await Task.Delay(2000);
 
-            _logger.LogInformation("+++ [Mensageria] Pagamento Processado com Sucesso para a Reserva: {BookingId} +++", message.BookingId);
+            // Busca o assento
+            var seat = await _context.Seats
+                .FirstOrDefaultAsync(s =>
+                    s.TripId == message.TripId &&
+                    s.SeatNumber == message.SeatNumber);
 
-            // Aqui, em um cenário real, dispararíamos outro evento: 'PaymentConfirmedEvent'
+            if (seat == null)
+            {
+                _logger.LogWarning("Assento não encontrado.");
+                return;
+            }
+
+            // Cria a reserva
+            var booking = new Booking
+            {
+                Id = message.BookingId,
+                TripId = message.TripId,
+                SeatId = seat.Id,
+                PassengerName = message.PassengerName,
+                PassengerDocument = message.PassengerDocument,
+                CreatedAt = DateTime.UtcNow,
+                Status = BookingStatus.Confirmed
+            };
+
+            // Salva no banco
+            _context.Bookings.Add(booking);
+
+            // Marca assento como reservado
+            seat.IsReserved = true;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("+++ Reserva salva com sucesso no banco! +++");
         }
     }
 }

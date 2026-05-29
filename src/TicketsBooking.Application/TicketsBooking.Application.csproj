@@ -1,11 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\TicketsBooking.Core\TicketsBooking.Core.csproj" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit" Version="9.1.1" />
+    <ProjectReference Include="..\TicketsBooking.Core\TicketsBooking.Core.csproj" />
+    <ProjectReference Include="..\TicketsBooking.Infrastructure\TicketsBooking.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
