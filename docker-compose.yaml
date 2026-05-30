@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # 1. Banco de Dados SQL Server
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: tickets_booking_sql
@@ -15,7 +14,6 @@ services:
     networks:
       - booking_network
 
-  # 2. Cache Redis
   redis:
     image: redis:alpine
     container_name: tickets_booking_redis
@@ -24,7 +22,23 @@ services:
     networks:
       - booking_network
 
-  # 3. API .NET
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: tickets_booking_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - booking_network
+
   webapi:
     image: tickets-booking-api
     build:
@@ -38,9 +52,16 @@ services:
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TicketsBookingDb;User Id=sa;Password=SqlServer@2026!;TrustServerCertificate=True;"
       Redis__ConnectionString: "redis:6379,abortConnect=false"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
     depends_on:
-      - sqlserver
-      - redis
+      rabbitmq:
+        condition: service_healthy
+      sqlserver:
+        condition: service_started
+      redis:
+        condition: service_started
     networks:
       - booking_network
 

@@ -24,7 +24,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Configuração ÚNICA do MassTransit (Padrão In-Memory para o desafio)
+// Configuração ÚNICA do MassTransit (Agora configurado com RabbitMQ)
 builder.Services.AddMassTransit(x =>
 {
     // Desativa a trava de licença da V9 dinamicamente (ignorado se for V8)
@@ -38,9 +38,20 @@ builder.Services.AddMassTransit(x =>
     // Registra o seu consumidor que vai processar a fila em background
     x.AddConsumer<BookingCreatedConsumer>();
 
-    x.UsingInMemory((context, cfg) =>
+    x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.ConfigureEndpoints(context);
+        string rabbitMqHost = builder.Configuration["RabbitMQ:Host"] ?? "rabbitmq";
+
+        cfg.Host(rabbitMqHost, "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+
+        cfg.ReceiveEndpoint("booking-created", e =>
+        {
+            e.ConfigureConsumer<BookingCreatedConsumer>(context);
+        });
     });
 });
 
