@@ -17,6 +17,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Suporte para Controllers
 builder.Services.AddControllers();
 
+// CONFIGURAÇÃO DO CORS: Permite que o frontend React acesse a API
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ViteFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Configuração do OpenAPI (.NET 9 nativo para documentação da API)
 builder.Services.AddOpenApi();
 
@@ -79,6 +90,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// MIDDLEWARE DE CORS: Deve vir antes da Autorização e dos Controllers
+app.UseCors("ViteFrontend");
 
 // Middleware de autorização
 app.UseAuthorization();
