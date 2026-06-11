@@ -13,8 +13,10 @@ namespace TicketsBooking.Core.Entities
         public DateTime ArrivalTime { get; set; }                  // Data/Hora de Chegada
         public decimal Price { get; set; }                         // Preço base da passagem
 
+        public Guid? RouteId { get; set; }
+
         // Propriedades de Navegação
-        // Uma viagem tem muitos assentos e muitas reservas
+        public Route? Route { get; set; }
         public ICollection<Seat> Seats { get; set; } = new List<Seat>();
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }

@@ -16,6 +16,7 @@
         public string PassengerDocument { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public BookingStatus Status { get; set; } = BookingStatus.PendingPayment;
+        public string ReservationCode { get; set; } = string.Empty;
 
         // Propriedades de Navegação
         public Trip? Trip { get; set; }
