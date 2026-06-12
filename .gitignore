@@ -2,3 +2,8 @@
 [Bb]in/
 [Oo]bj/
 *.user
+# Claude Code
+CLAUDE.md
+.claude/
+.claude.json
+.claude.json.backup

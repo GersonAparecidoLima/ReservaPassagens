@@ -17,6 +17,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Suporte para Controllers
 builder.Services.AddControllers();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 // CONFIGURAÇÃO DO CORS: Permite que o frontend React acesse a API
 builder.Services.AddCors(options =>
 {
@@ -28,17 +31,17 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configuração do OpenAPI (.NET 9 nativo para documentação da API)
-builder.Services.AddOpenApi();
+
 
 // Configuração do Entity Framework (SQL Server)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configuração ÚNICA do MassTransit (Agora configurado com RabbitMQ)
+// Configuração ÚNICA do MassTransit (RabbitMQ)
 builder.Services.AddMassTransit(x =>
 {
-    // Desativa a trava de licença da V9 dinamicamente (ignorado se for V8)
+    // Compatibilidade com MassTransit Community Edition
     var licensingType = Type.GetType("MassTransit.Licensing.LicenseAssignment, MassTransit");
     if (licensingType != null)
     {
@@ -46,14 +49,12 @@ builder.Services.AddMassTransit(x =>
         setLicenseMethod?.Invoke(null, new object[] { "MT-Community" });
     }
 
-    // Registra o seu consumidor que vai processar a fila em background
+    // Registra o Consumer
     x.AddConsumer<BookingCreatedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        string rabbitMqHost = builder.Configuration["RabbitMQ:Host"] ?? "rabbitmq";
-
-        cfg.Host(rabbitMqHost, "/", h =>
+        cfg.Host("localhost", "/", h =>
         {
             h.Username("guest");
             h.Password("guest");
@@ -86,7 +87,8 @@ var app = builder.Build();
 // =================================================================
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
