@@ -25,11 +25,24 @@ namespace TicketsBooking.API.Controllers
                 return Ok(new { message = "O banco de dados já possui dados de teste carregados." });
             }
 
+            var routeId = Guid.Parse("aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb");
+
+            var route = new TicketsBooking.Core.Entities.Route
+            {
+                Id = routeId,
+                Name = "São Paulo x Rio de Janeiro",
+                DepartureCity = "São Paulo",
+                ArrivalCity = "Rio de Janeiro"
+            };
+
+
             // 2. Instancia uma viagem de teste com ID fixo e conhecido
             var tripId = Guid.Parse("9b85f3b2-2222-5555-9999-111111111111");
             var trip = new Trip
             {
                 Id = tripId,
+                RouteId = routeId,
+                Route = route,
                 VehicleNumber = "Bus-JCA-2026",
                 DeparturePlace = "São Paulo - Tietê",
                 ArrivalPlace = "Rio de Janeiro - Novo Rio",
@@ -53,6 +66,7 @@ namespace TicketsBooking.API.Controllers
             }
 
             // 4. Salva no banco de dados via EF Core
+            await _dbContext.Routes.AddAsync(route);
             await _dbContext.Trips.AddAsync(trip);
             await _dbContext.SaveChangesAsync();
 

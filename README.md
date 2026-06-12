@@ -1,8 +1,12 @@
 # TicketsBooking API 🚍
 
-API para gerenciamento de viagens rodoviárias e reservas de passagens, desenvolvida em ASP.NET Core 9 seguindo princípios de arquitetura em camadas, regras de negócio, testes automatizados e execução via Docker.
+Sistema de gerenciamento de viagens rodoviárias e reservas de passagens desenvolvido com **ASP.NET Core 9**, aplicando boas práticas de arquitetura de software, regras de negócio, mensageria assíncrona, cache distribuído e testes automatizados.
 
-## Tecnologias Utilizadas
+O projeto foi construído com foco em **escalabilidade, manutenibilidade e qualidade de código**, seguindo uma arquitetura em camadas e utilizando tecnologias amplamente adotadas no mercado.
+
+---
+
+# 🚀 Tecnologias Utilizadas
 
 * .NET 9
 * ASP.NET Core Web API
@@ -17,7 +21,7 @@ API para gerenciamento de viagens rodoviárias e reservas de passagens, desenvol
 
 ---
 
-## Arquitetura
+# 🏗️ Arquitetura da Solução
 
 ```text
 src/
@@ -30,56 +34,84 @@ tests/
 └── TicketsBooking.Application.Tests
 ```
 
-### Responsabilidades
+## Camadas da Aplicação
 
-**TicketsBooking.API**
+### TicketsBooking.API
+
+Responsável pela exposição da API REST.
 
 * Controllers
 * Configuração da aplicação
-* Swagger
+* Swagger/OpenAPI
+* Injeção de Dependências
 
-**TicketsBooking.Application**
+### TicketsBooking.Application
 
-* Casos de uso
+Responsável pelos casos de uso da aplicação.
+
 * Serviços de aplicação
 * DTOs
+* Orquestração das regras de negócio
 
-**TicketsBooking.Core**
+### TicketsBooking.Core
+
+Camada de domínio.
 
 * Entidades
-* Eventos
 * Interfaces
-* Regras de domínio
+* Eventos
+* Regras de negócio
+* Objetos de valor
 
-**TicketsBooking.Infrastructure**
+### TicketsBooking.Infrastructure
+
+Camada de infraestrutura.
 
 * Entity Framework Core
-* Banco de dados
-* Cache Redis
-* Mensageria RabbitMQ
+* Persistência de dados
+* Redis
+* RabbitMQ
+* Implementações de serviços externos
 
 ---
 
-## Funcionalidades Implementadas
+# 📋 Funcionalidades Implementadas
 
-### Rotas
+## Rotas
 
 ```http
 GET /rotas
 ```
 
-Lista todas as rotas disponíveis.
+Retorna todas as rotas cadastradas no sistema.
 
-### Viagens
+### Exemplo
+
+```json
+[
+  {
+    "id": "aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb",
+    "nome": "São Paulo x Rio de Janeiro",
+    "cidadeOrigem": "São Paulo",
+    "cidadeDestino": "Rio de Janeiro"
+  }
+]
+```
+
+---
+
+## Viagens
 
 ```http
 GET /viagens
 GET /viagens/{id}
 ```
 
-Permite consultar viagens e visualizar assentos disponíveis.
+Permite consultar viagens disponíveis e visualizar detalhes da viagem, incluindo assentos livres e ocupados.
 
-### Reservas
+---
+
+## Reservas
 
 ```http
 POST /reservas
@@ -91,7 +123,7 @@ Permite criar, consultar e cancelar reservas.
 
 ---
 
-## Regras de Negócio
+# 📌 Regras de Negócio
 
 ### Assento Único
 
@@ -99,15 +131,17 @@ Não é permitido reservar um assento já ocupado.
 
 ### Validação de CPF
 
-Todos os CPFs são validados utilizando cálculo dos dígitos verificadores.
+Todos os CPFs são validados através do cálculo dos dígitos verificadores.
 
-### Viagem Expirada
+### Viagem Encerrada
 
-Não é permitido realizar reservas para viagens já iniciadas.
+Não é permitido criar reservas para viagens cuja partida já ocorreu.
 
 ### Código de Reserva
 
-Cada reserva recebe um código único no formato:
+Cada reserva recebe um identificador único e legível.
+
+Exemplo:
 
 ```text
 ABC-12345
@@ -115,26 +149,35 @@ ABC-12345
 
 ### Cancelamento
 
-O cancelamento somente é permitido até 2 horas antes da partida.
+Reservas só podem ser canceladas até **2 horas antes da partida**.
 
 ---
 
-## Testes Automatizados
+# 🧪 Testes Automatizados
 
-O projeto possui testes automatizados utilizando xUnit.
+O projeto possui cobertura de testes automatizados utilizando **xUnit**.
 
-### Cenários Cobertos
+## Cenários Cobertos
 
-* Validação de CPF válido
-* Validação de CPF inválido
-* Geração de código de reserva
-* Garantia de unicidade do código de reserva
-* Reserva de assento já ocupado
-* Reserva para viagem já realizada
+### Validação de CPF
+
+* CPF válido
+* CPF inválido
+* CPF com dígitos verificadores incorretos
+
+### Regras de Reserva
+
+* Assento já ocupado
+* Viagem já realizada
 * Cancelamento fora do prazo permitido
 * Cancelamento realizado com sucesso
 
-### Executar Testes
+### Código de Reserva
+
+* Geração de código
+* Garantia de unicidade
+
+## Executar Testes
 
 ```bash
 dotnet test
@@ -150,22 +193,24 @@ Falhas: 0
 
 ---
 
-## Executando com Docker
+# 🐳 Executando com Docker
 
-### Subir todo o ambiente
+Subir toda a infraestrutura e aplicação:
 
 ```bash
 docker compose up --build
 ```
 
-Serviços iniciados:
+Serviços disponibilizados:
 
 * SQL Server
 * Redis
 * RabbitMQ
-* API
+* API ASP.NET Core
 
-### Swagger
+---
+
+## Swagger
 
 Após a inicialização:
 
@@ -175,19 +220,27 @@ http://localhost:5000/swagger
 
 ---
 
-## Seed de Dados
+# 🌱 Seed de Dados
 
-Para carregar dados de exemplo:
+Para popular o ambiente com dados de exemplo:
 
 ```http
 POST /api/Admin/seed
 ```
 
+O endpoint cria:
+
+* Rotas
+* Viagens
+* Assentos
+
+Permitindo testar rapidamente todas as funcionalidades da API.
+
 ---
 
-## Exemplo de Reserva
+# 📦 Exemplo de Reserva
 
-### Criar Reserva
+## Requisição
 
 ```json
 {
@@ -200,32 +253,36 @@ POST /api/Admin/seed
 }
 ```
 
-### Resposta
+## Resposta
 
 ```json
 {
   "success": true,
   "message": "Reserva criada com sucesso.",
+  "expiresAt": "2026-06-12T13:08:42.101304Z",
   "reservationCode": "ABC-12345"
 }
 ```
 
 ---
 
-## Diferenciais Técnicos
+# ⭐ Diferenciais Técnicos
 
 * Arquitetura em camadas
-* Separação clara de responsabilidades
-* Integração com Redis para controle de concorrência
-* Integração com RabbitMQ para processamento assíncrono
-* Testes automatizados
-* Docker Compose para execução completa do ambiente
-* Swagger/OpenAPI para documentação da API
+* Princípios SOLID
+* Entity Framework Core
+* Cache distribuído com Redis
+* Mensageria assíncrona com RabbitMQ
+* Docker Compose para ambiente completo
+* Testes automatizados com xUnit
+* Swagger/OpenAPI
+* Controle de concorrência para reservas
+* Validações de domínio
 
 ---
 
-## Autor
+# 👨‍💻 Autor
 
 **Gerson Aparecido Lima**
 
-Desenvolvedor Backend .NET
+Desenvolvedor Backend .NET | C# | ASP.NET Core | SQL Server | Docker
