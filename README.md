@@ -1,8 +1,32 @@
 # TicketsBooking API 🚍
 
+![.NET](https://img.shields.io/badge/.NET-9.0-purple)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
+![Tests](https://img.shields.io/badge/Tests-16%20Passing-success)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+## Links Rápidos
+
+- Swagger: <http://localhost:5000/swagger>
+- RabbitMQ Management: <http://localhost:15672>
+
+Credenciais RabbitMQ:
+
+- Usuário: guest
+- Senha: guest
+
 Sistema de gerenciamento de viagens rodoviárias e reservas de passagens desenvolvido com **ASP.NET Core 9**, aplicando boas práticas de arquitetura de software, regras de negócio, mensageria assíncrona, cache distribuído e testes automatizados.
 
 O projeto foi construído com foco em **escalabilidade, manutenibilidade e qualidade de código**, seguindo uma arquitetura em camadas e utilizando tecnologias amplamente adotadas no mercado.
+
+## Visão Geral
+
+O TicketsBooking é uma API REST para gerenciamento de viagens rodoviárias e reservas de passagens, desenvolvida em ASP.NET Core 9.
+
+A solução foi construída utilizando arquitetura em camadas, Entity Framework Core, SQL Server, Redis e RabbitMQ, aplicando princípios SOLID, controle de concorrência e testes automatizados para garantir consistência e escalabilidade.
+
+O projeto simula um cenário real de reservas de passagens, contemplando regras de negócio, persistência de dados, mensageria assíncrona e execução completa via Docker Compose.
+
 
 ---
 
@@ -33,6 +57,37 @@ src/
 tests/
 └── TicketsBooking.Application.Tests
 ```
+
+```text
+┌─────────────┐
+│   Swagger   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────────┐
+│ TicketsBooking.API  │
+└─────────┬───────────┘
+          │
+          ▼
+┌───────────────────────────┐
+│ TicketsBooking.Application│
+└─────────┬─────────────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ TicketsBooking.Core │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ Infrastructure      │
+├─────────────────────┤
+│ SQL Server          │
+│ Redis               │
+│ RabbitMQ            │
+└─────────────────────┘
+```
+
 
 ## Camadas da Aplicação
 
@@ -132,6 +187,7 @@ Não é permitido reservar um assento já ocupado.
 ### Validação de CPF
 
 Todos os CPFs são validados através do cálculo dos dígitos verificadores.
+O CPF do passageiro é informado através do campo `passengerDocument` durante a criação da reserva.
 
 ### Viagem Encerrada
 
@@ -186,9 +242,9 @@ dotnet test
 Resultado atual:
 
 ```text
-Total: 16
-Aprovados: 16
-Falhas: 0
+✓ Total de testes: 16
+✓ Testes aprovados: 16
+✓ Falhas: 0
 ```
 
 ---
@@ -201,43 +257,6 @@ Subir toda a infraestrutura e aplicação:
 docker compose up --build
 ```
 
-### Fluxo de execução
-
-1. Subir a infraestrutura:
-
-```bash
-docker compose up --build
-```
-
-2. Acessar o Swagger:
-
-```text
-http://localhost:5000/swagger
-```
-
-3. Executar o Seed:
-
-```http
-POST /api/Admin/seed
-```
-
-4. Testar os endpoints:
-
-```http
-GET /rotas
-GET /viagens
-POST /reservas
-```
-
-
-Serviços disponibilizados:
-
-* SQL Server
-* Redis
-* RabbitMQ
-* API ASP.NET Core
-
----
 
 ## Swagger
 
@@ -246,6 +265,28 @@ Após a inicialização:
 ```text
 http://localhost:5000/swagger
 ```
+
+# 💻 Executando Localmente
+
+Restaurar dependências:
+
+```bash
+dotnet restore
+```
+
+Executar a aplicação:
+
+```bash
+dotnet ef database update --project src/TicketsBooking.Infrastructure --startup-project src/TicketsBooking.API
+dotnet run --project src/TicketsBooking.API
+```
+
+Acessar o Swagger:
+
+```text
+http://localhost:5000/swagger
+```
+
 
 ---
 
@@ -282,7 +323,6 @@ Caso o endpoint seja executado novamente, os dados não serão duplicados. O sis
 ---
 
 # 📦 Exemplo de Reserva
-
 ## Requisição
 
 ```json
@@ -296,16 +336,43 @@ Caso o endpoint seja executado novamente, os dados não serão duplicados. O sis
 }
 ```
 
+### Campos da Requisição
+
+| Campo             | Descrição               |
+| ----------------- | ----------------------- |
+| tripId            | Identificador da viagem |
+| seatNumber        | Número do assento       |
+| passengerName     | Nome do passageiro      |
+| passengerDocument | CPF do passageiro       |
+| passengerEmail    | E-mail do passageiro    |
+| price             | Valor da passagem       |
+
+
 ## Resposta
 
 ```json
 {
   "success": true,
   "message": "Reserva criada com sucesso.",
-  "expiresAt": "2026-06-12T13:08:42.101304Z",
+  "expiresAt": "<data de expiração>",
   "reservationCode": "ABC-12345"
 }
 ```
+
+# 🔒 Controle de Concorrência
+
+O projeto utiliza Redis para implementar um mecanismo de lock distribuído durante o processo de reserva.
+
+Esse controle impede que dois usuários reservem simultaneamente o mesmo assento, garantindo consistência dos dados e evitando conflitos em cenários concorrentes.
+
+---
+
+# 📨 Mensageria Assíncrona
+
+A aplicação utiliza RabbitMQ para publicação e processamento de eventos de negócio.
+
+Quando uma reserva é criada, um evento `BookingCreatedEvent` é publicado e consumido pelo `BookingCreatedConsumer`, permitindo desacoplamento entre os componentes da aplicação e facilitando futuras integrações.
+
 
 ---
 
@@ -323,6 +390,26 @@ Caso o endpoint seja executado novamente, os dados não serão duplicados. O sis
 * Validações de domínio
 
 ---
+
+# ✅ Status do Projeto
+
+Funcionalidades implementadas:
+
+* Cadastro e consulta de rotas
+* Consulta de viagens
+* Reserva de assentos
+* Cancelamento de reservas
+* Validação de CPF
+* Controle de concorrência com Redis
+* Mensageria assíncrona com RabbitMQ
+* Testes automatizados
+* Docker Compose
+
+Projeto pronto para execução e avaliação técnica.
+
+---
+
+Projeto desenvolvido para fins de estudo, demonstração técnica e avaliação de competências em desenvolvimento Backend com .NET.
 
 # 👨‍💻 Autor
 
