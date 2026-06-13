@@ -187,7 +187,7 @@ Resultado atual:
 
 ```text
 Total: 16
-Sucesso: 16
+Aprovados: 16
 Falhas: 0
 ```
 
@@ -200,6 +200,35 @@ Subir toda a infraestrutura e aplicação:
 ```bash
 docker compose up --build
 ```
+
+### Fluxo de execução
+
+1. Subir a infraestrutura:
+
+```bash
+docker compose up --build
+```
+
+2. Acessar o Swagger:
+
+```text
+http://localhost:5000/swagger
+```
+
+3. Executar o Seed:
+
+```http
+POST /api/Admin/seed
+```
+
+4. Testar os endpoints:
+
+```http
+GET /rotas
+GET /viagens
+POST /reservas
+```
+
 
 Serviços disponibilizados:
 
@@ -220,21 +249,35 @@ http://localhost:5000/swagger
 
 ---
 
-# 🌱 Seed de Dados
+# 🚀 Primeiros Passos
 
-Para popular o ambiente com dados de exemplo:
+
+Após subir os containers pela primeira vez, o banco de dados estará vazio.
+
+Para carregar os dados de demonstração e iniciar os testes da aplicação, execute o endpoint:
 
 ```http
 POST /api/Admin/seed
 ```
 
-O endpoint cria:
+Esse endpoint criará automaticamente:
 
-* Rotas
-* Viagens
-* Assentos
+* 1 rota de exemplo
+* 1 viagem de exemplo
+* Assentos disponíveis para reserva
 
-Permitindo testar rapidamente todas as funcionalidades da API.
+Após a execução do seed, os seguintes endpoints estarão prontos para teste:
+
+```http
+GET /rotas
+GET /viagens
+GET /viagens/{id}
+POST /reservas
+GET /reservas/{codigo}
+DELETE /reservas/{codigo}
+```
+
+Caso o endpoint seja executado novamente, os dados não serão duplicados. O sistema identificará que os registros de demonstração já foram carregados.
 
 ---
 

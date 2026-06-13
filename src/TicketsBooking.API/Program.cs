@@ -54,10 +54,14 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("localhost", "/", h =>
+        var rabbitMqHost = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
+        var rabbitMqUsername = builder.Configuration["RabbitMQ:Username"] ?? "guest";
+        var rabbitMqPassword = builder.Configuration["RabbitMQ:Password"] ?? "guest";
+
+        cfg.Host(rabbitMqHost, "/", h =>
         {
-            h.Username("guest");
-            h.Password("guest");
+            h.Username(rabbitMqUsername);
+            h.Password(rabbitMqPassword);
         });
 
         cfg.ReceiveEndpoint("booking-created", e =>
@@ -99,7 +103,7 @@ app.UseCors("ViteFrontend");
 // Middleware de autorização
 app.UseAuthorization();
 
-// Mapeia automaticamente todas as Controllers (incluindo a BookingsController)
+
 app.MapControllers();
 
 // --- Bloco adicionado para aplicar migrations automaticamente ao iniciar ---
