@@ -30,20 +30,56 @@ O projeto simula um cenário real de reservas de passagens, contemplando regras 
 
 ---
 
-# 🚀 Tecnologias Utilizadas
+# 🔧 Tecnologias e Bibliotecas Utilizadas
 
-* .NET 9
-* ASP.NET Core Web API
-* Entity Framework Core
-* SQL Server
-* Redis
-* RabbitMQ
-* Docker & Docker Compose
-* xUnit
-* Moq
-* Swagger / OpenAPI
+| Tecnologia            | Motivo da Utilização                                 |
+| --------------------- | ---------------------------------------------------- |
+| ASP.NET Core 9        | Construção da API REST                               |
+| Entity Framework Core | Mapeamento objeto-relacional e acesso a dados        |
+| SQL Server            | Persistência dos dados da aplicação                  |
+| Redis                 | Controle de concorrência através de lock distribuído |
+| RabbitMQ              | Processamento assíncrono de eventos                  |
+| MassTransit           | Abstração e integração simplificada com RabbitMQ     |
+| xUnit                 | Testes automatizados                                 |
+| Moq                   | Criação de mocks para testes unitários               |
+| Docker                | Padronização e isolamento do ambiente                |
+| Swagger/OpenAPI       | Documentação e testes dos endpoints                  |
 
----
+
+# 🔐 Considerações de Segurança
+
+As credenciais presentes no `docker-compose.yml` são utilizadas apenas para ambiente local de desenvolvimento e demonstração técnica.
+
+Em um ambiente real de produção, essas informações deveriam ser armazenadas em variáveis de ambiente seguras, secret manager ou cofre de segredos.
+
+
+# 🏛️ Decisões de Arquitetura
+
+Algumas decisões arquiteturais adotadas durante o desenvolvimento:
+
+* Utilização de arquitetura em camadas (API, Application, Core e Infrastructure) para promover separação de responsabilidades.
+* Centralização das regras de negócio na camada Core/Application.
+* Uso de Redis para evitar reservas concorrentes do mesmo assento.
+* Utilização de RabbitMQ para desacoplar eventos de negócio da execução principal da API.
+* Entity Framework Core como ORM para simplificar o acesso ao banco de dados.
+* Docker Compose para disponibilizar toda a infraestrutura com um único comando.
+* Testes automatizados para validação das principais regras de negócio.
+
+# 📌 Escopo da Entrega
+
+## Implementado
+
+* Cadastro e consulta de rotas
+* Consulta de viagens
+* Reserva de assentos
+* Cancelamento de reservas
+* Validação de CPF
+* Controle de concorrência com Redis
+* Publicação de eventos via RabbitMQ
+* Testes automatizados
+* Docker Compose
+* Swagger/OpenAPI
+
 
 # 🏗️ Arquitetura da Solução
 
